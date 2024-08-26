@@ -41,6 +41,7 @@ export function Chat({
   setInput: (e: any) => void,
   clearMessages: () => void
 }) {
+  const [isComposing, setIsComposing] = useState(false);
   const [files, setFiles] = useState<FileData[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // console.log('messages', messages);
@@ -248,8 +249,10 @@ export function Chat({
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onPaste={handlePaste}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={() => setIsComposing(false)}
             onKeyDown={function (e) {
-              if (e.key === 'Enter' && (!e.shiftKey)) {
+              if (e.key === 'Enter' && (!e.shiftKey) && !isComposing) {
                 e.preventDefault();
                 customSubmit(e, {
                   data: files.length ? JSON.stringify(files) : undefined
