@@ -1,5 +1,5 @@
 import { useState, useEffect, FormEvent, useCallback, useRef } from 'react'
-import { Terminal, Image as ImageIcon ,Paperclip,Trash2,FileText, FileSpreadsheet, FileUp,RefreshCw} from 'lucide-react'
+import { Terminal, Image as ImageIcon, Paperclip, Trash2, FileText, FileSpreadsheet, FileUp, RefreshCw } from 'lucide-react'
 import { Message } from 'ai/react'
 import type {
   ChatRequestOptions,
@@ -7,10 +7,13 @@ import type {
 } from '@ai-sdk/ui-utils';
 import { Input } from '@/components/ui/input'
 import { JSONValue } from 'ai';
+import { Textarea } from './ui/textarea';
+import { CodeView } from './code-view';
+import { getLanguage } from './side-view';
 
 export interface FileData {
   id: string;
-  type: 'image' | 'text' | 'csv'| 'xlsx';
+  type: 'image' | 'text' | 'csv' | 'xlsx';
   content: string;
   name: string;
 }
@@ -34,7 +37,7 @@ export function Chat({
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void,
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void,
   reload: (chatRequestOptions?: ChatRequestOptions | undefined) => Promise<string | null | undefined>,
-  isLoading:boolean,
+  isLoading: boolean,
   setInput: (e: any) => void,
   clearMessages: () => void
 }) {
@@ -45,8 +48,9 @@ export function Chat({
   const latestToolInvocation = latestMessageWithToolInvocation?.toolInvocations?.[0]
   const code = latestToolInvocation ? latestToolInvocation.args.code : undefined;
   // get the last element of data
+  const language = getLanguage(latestToolInvocation && latestToolInvocation.toolName)
 
-  const exeResult = data?.length && data.slice(-1)[0]?.state === 'complete' ? data.slice(-1)[0]?.stdout:'';
+  const exeResult = data?.length && data.slice(-1)[0]?.state === 'complete' ? data.slice(-1)[0]?.stdout : '';
   // console.log('data:',data)
   // console.log('latestToolInvocation:',latestToolInvocation)
 
@@ -59,13 +63,13 @@ export function Chat({
 
       //since AI SDK for Claude does't support tool content
       //so I modify the last user message to include the tool invocation results
-      const content = code ? `## code:\n${code} \n\n## tool executed result:\n${exeResult} \n\nHuman:\n${input}` : input;
+      const content = code ? `Human:\n${input}` : input;
       append({
         content,
         role: 'user',
-        data:options?.data  as string,
+        data: options?.data as string,
         createdAt: new Date(),
-        },
+      },
         options
       );
 
@@ -85,11 +89,11 @@ export function Chat({
         if (file.type.startsWith('image/')) {
           type = 'image';
         } else if (file.name.endsWith('.csv')) {
-          type = 'csv';  
+          type = 'csv';
         } else if (file.name.endsWith('.xlsx')) {
-          type = 'xlsx';    
-           // Convert ArrayBuffer to Base64 string
-          const uint8Array = new Uint8Array((result as any ) as ArrayBuffer);
+          type = 'xlsx';
+          // Convert ArrayBuffer to Base64 string
+          const uint8Array = new Uint8Array((result as any) as ArrayBuffer);
           const binaryString = uint8Array.reduce((data, byte) => data + String.fromCharCode(byte), '');
           content = btoa(binaryString);
           // console.log(content)
@@ -107,9 +111,9 @@ export function Chat({
 
       if (file.type.startsWith('image/')) {
         reader.readAsDataURL(file);
-      }else if (file.name.endsWith('.xlsx')) {
+      } else if (file.name.endsWith('.xlsx')) {
         reader.readAsArrayBuffer(file);
-      }else {
+      } else {
         reader.readAsText(file);
       }
     });
@@ -152,7 +156,7 @@ export function Chat({
       case 'csv':
         return <FileSpreadsheet className="w-full h-full text-green-600" />;
       case 'xlsx':
-          return <FileSpreadsheet className="w-full h-full text-green-600" />;
+        return <FileSpreadsheet className="w-full h-full text-green-600" />;
     }
   };
 
@@ -162,9 +166,9 @@ export function Chat({
         {messages.map(message => (
           <div className={`py-2 px-4 shadow-sm whitespace-pre-wrap ${message.role !== 'user' ? 'bg-white' : 'bg-white/40'} rounded-lg border-b border-[#FFE7CC] font-serif`} key={message.id}>
             {message.content}
-            {message.data && ( JSON.parse(message.data as string).map( (fileData:FileData, index:number) => (
+            {message.data && (JSON.parse(message.data as string).map((fileData: FileData, index: number) => (
               <div key={index} className="mt-4 flex justify-start items-start border border-[#FFE7CC] rounded-md">
-               {fileData.type === 'image' ? (
+                {fileData.type === 'image' ? (
                   <img
                     src={fileData.content}
                     alt="Uploaded"
@@ -173,24 +177,30 @@ export function Chat({
                 ) : (
                   <div className="p-2">
                     <p>{fileData.name}</p>
-                    <p>{fileData.type === 'csv' ? 'CSV file' : (fileData.type === 'xlsx' ? 'XLSX file': 'Text file')}</p>
+                    <p>{fileData.type === 'csv' ? 'CSV file' : (fileData.type === 'xlsx' ? 'XLSX file' : 'Text file')}</p>
                   </div>
                 )}
               </div>
-              ))
-            )}  
+            ))
+            )}
             {message.toolInvocations && message.toolInvocations.length > 0 &&
-              <div className="mt-4 flex justify-start items-start border border-[#FFE7CC] rounded-md">
-                <div className="p-2 self-stretch border-r border-[#FFE7CC] bg-[#FFE7CC] w-14 flex items-center justify-center">
-                  <Terminal strokeWidth={2} className="text-[#FF8800]" />
+              <div>
+                <div className="mt-4 flex justify-start items-start border border-[#FFE7CC] rounded-md">
+                  <div className="p-2 self-stretch border-r border-[#FFE7CC] bg-[#FFE7CC] w-14 flex items-center justify-center">
+                    <Terminal strokeWidth={2} className="text-[#FF8800]" />
+                  </div>
+                  <div className="p-2 flex flex-col space-y-1 justify-start items-start min-w-[100px]">
+                    {(message.toolInvocations[0].toolName === "runPython" || message.toolInvocations[0].toolName === "runJs") &&
+                      <>
+                        <span className="font-bold font-sans text-sm">{message.toolInvocations[0].args.title}</span>
+                        <span className="font-sans text-sm">{message.toolInvocations[0].args.description}</span>
+                      </>
+                    }
+                  </div>
                 </div>
-                <div className="p-2 flex flex-col space-y-1 justify-start items-start min-w-[100px]">
-                  {(message.toolInvocations[0].toolName === "runPython" || message.toolInvocations[0].toolName === "runJs") &&
-                    <>
-                      <span className="font-bold font-sans text-sm">{message.toolInvocations[0].args.title}</span>
-                      <span className="font-sans text-sm">{message.toolInvocations[0].args.description}</span>
-                    </>
-                  }
+                <div className="mt-4">
+                  {`## code:\n${code} \n\n## tool executed result:\n${exeResult}`}
+                  {/* <CodeView code={code} language={language} /> */}
                 </div>
               </div>
             }
@@ -206,9 +216,9 @@ export function Chat({
         className="flex flex-col gap-6">
         {files.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {files.map((file,index) => (
+            {files.map((file, index) => (
               <div key={index} className="relative w-24 h-24">
-                 {renderFilePreview(file)}...{file.name.slice(-12)}
+                {renderFilePreview(file)}...{file.name.slice(-12)}
                 <button
                   type="button"
                   onClick={() => removeFile(file.id)}
@@ -223,20 +233,29 @@ export function Chat({
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={(e)=>{ 
+            onClick={(e) => {
               clearMessages()
-              setFiles([])}
+              setFiles([])
+            }
             }
             className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
           >
             <Trash2 size={24} />
           </button>
-          <Input
+          <Textarea
             className="ring-0 flex-grow"
             placeholder="Ask Claude..."
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onPaste={handlePaste}
+            onKeyDown={function (e) {
+              if (e.key === 'Enter' && (!e.shiftKey)) {
+                e.preventDefault();
+                customSubmit(e, {
+                  data: files.length ? JSON.stringify(files) : undefined
+                })
+              }
+            }}
           />
           <button
             type="button"
@@ -253,9 +272,9 @@ export function Chat({
             multiple
             className="hidden"
           />
-            <button
+          <button
             type="button"
-            onClick={reload} 
+            onClick={reload}
             disabled={isLoading}
             className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >

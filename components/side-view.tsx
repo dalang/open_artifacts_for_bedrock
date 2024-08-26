@@ -11,6 +11,10 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs'
 
+const defualtLang = 'javascript'
+export function getLanguage(toolName?: string) {
+  return toolName === 'runJs' ? 'javascript' : (toolName === 'runPython' ? 'python' : defualtLang)
+}
 
 export function SideView({
   toolInvocation,
@@ -23,9 +27,7 @@ export function SideView({
     return null
   }
   // console.log('data:',data)
-  const defualtLang = 'javascript'
-  const language = data[0]?.tool === 'runJs' ?  'javascript' : 
-                    (data[0]?.tool === 'runPython' ? 'python':defualtLang)
+  const language = getLanguage(data[0]?.tool as string)
 
   const { args, result }: { args: Record<string, any>, result?: CodeExecResult } = toolInvocation
   // console.log('SideView:',result)
@@ -53,7 +55,7 @@ export function SideView({
         {toolInvocation && (
           <div className="w-full flex-1 flex flex-col items-start justify-start overflow-y-auto">
             <TabsContent value="code" className="flex-1 w-full">
-              <CodeView code={args.code} language={language}/>
+              <CodeView code={args.code} language={language} />
             </TabsContent>
             <TabsContent value="artifact" className="flex-1 w-full flex flex flex-col items-start justify-start">
               <ArtifactView result={result} />
