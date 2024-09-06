@@ -41,7 +41,7 @@ export default function Login() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#fff3e6]">
       <div className="w-full max-w-md px-8 py-6 bg-white rounded-lg shadow-md">
-        <h3 className="text-2xl font-bold text-center text-red-500 mb-6">Open Arifacts for Bedrock</h3>
+        <h3 className="text-2xl font-bold text-center text-red-500 mb-6">Open Artifacts for Bedrock</h3>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
@@ -73,7 +73,7 @@ export default function Login() {
               </div>
             )}
             <div>
-              <button 
+              <button
                 className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#268bd2] ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 type="submit"
                 disabled={isLoading}
